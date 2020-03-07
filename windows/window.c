@@ -336,6 +336,7 @@ static void win_seat_connection_fatal(Seat *seat, const char *msg);
 static void win_seat_update_specials_menu(Seat *seat);
 static void win_seat_set_busy_status(Seat *seat, BusyStatus status);
 static bool win_seat_set_trust_status(Seat *seat, bool trusted);
+static bool win_seat_get_cursor_position(Seat *seat, int *x, int *y);
 
 static const SeatVtable win_seat_vt = {
     win_seat_output,
@@ -358,6 +359,7 @@ static const SeatVtable win_seat_vt = {
     win_seat_set_trust_status,
     nullseat_verbose_yes,
     nullseat_interactive_yes,
+    win_seat_get_cursor_position,
 };
 static WinGuiSeat wgs = { .seat.vt = &win_seat_vt,
                           .logpolicy.vt = &win_gui_logpolicy_vt };
@@ -730,10 +732,16 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
     {
         int winmode = WS_OVERLAPPEDWINDOW | WS_VSCROLL;
         int exwinmode = 0;
+        const struct BackendVtable *vt =
+            backend_vt_from_proto(be_default_protocol);
+        bool resize_forbidden = false;
+        if (vt && vt->flags & BACKEND_RESIZE_FORBIDDEN)
+            resize_forbidden = true;
         wchar_t *uappname = dup_mb_to_wc(DEFAULT_CODEPAGE, 0, appname);
         if (!conf_get_bool(conf, CONF_scrollbar))
             winmode &= ~(WS_VSCROLL);
-        if (conf_get_int(conf, CONF_resize_action) == RESIZE_DISABLED)
+        if (conf_get_int(conf, CONF_resize_action) == RESIZE_DISABLED ||
+            resize_forbidden)
             winmode &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
         if (conf_get_bool(conf, CONF_alwaysontop))
             exwinmode |= WS_EX_TOPMOST;
@@ -1739,6 +1747,7 @@ static void deinit_fonts(void)
 
 static void wintw_request_resize(TermWin *tw, int w, int h)
 {
+    const struct BackendVtable *vt;
     int width, height;
 
     /* If the window is maximized suppress resizing attempts */
@@ -1748,6 +1757,9 @@ static void wintw_request_resize(TermWin *tw, int w, int h)
     }
 
     if (conf_get_int(conf, CONF_resize_action) == RESIZE_DISABLED) return;
+    vt = backend_vt_from_proto(be_default_protocol);
+    if (vt && vt->flags & BACKEND_RESIZE_FORBIDDEN)
+        return;
     if (h == term->rows && w == term->cols) return;
 
     /* Sanity checks ... */
@@ -5799,5 +5811,11 @@ static int win_seat_get_userpass_input(
 static bool win_seat_set_trust_status(Seat *seat, bool trusted)
 {
     term_set_trust_status(term, trusted);
+    return true;
+}
+
+static bool win_seat_get_cursor_position(Seat *seat, int *x, int *y)
+{
+    term_get_cursor_position(term, x, y);
     return true;
 }

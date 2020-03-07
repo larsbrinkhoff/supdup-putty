@@ -1472,6 +1472,7 @@ static void clipboard_control(struct controlset *s, const char *label,
 void setup_config_box(struct controlbox *b, bool midsession,
                       int protocol, int protcfginfo)
 {
+    const struct BackendVtable *backvt;
     struct controlset *s;
     struct sessionsaver_data *ssd;
     struct charclass_data *ccd;
@@ -1481,6 +1482,7 @@ void setup_config_box(struct controlbox *b, bool midsession,
     struct portfwd_data *pfd;
     struct manual_hostkey_data *mh;
     union control *c;
+    bool resize_forbidden = false;
     char *str;
 
     ssd = (struct sessionsaver_data *)
@@ -1864,17 +1866,23 @@ void setup_config_box(struct controlbox *b, bool midsession,
     ctrl_settitle(b, "Window", str);
     sfree(str);
 
-    s = ctrl_getset(b, "Window", "size", "Set the size of the window");
-    ctrl_columns(s, 2, 50, 50);
-    c = ctrl_editbox(s, "Columns", 'm', 100,
-                     HELPCTX(window_size),
-                     conf_editbox_handler, I(CONF_width), I(-1));
-    c->generic.column = 0;
-    c = ctrl_editbox(s, "Rows", 'r', 100,
-                     HELPCTX(window_size),
-                     conf_editbox_handler, I(CONF_height),I(-1));
-    c->generic.column = 1;
-    ctrl_columns(s, 1, 100);
+    backvt = backend_vt_from_proto(protocol);
+    if (backvt)
+        resize_forbidden = (backvt->flags & BACKEND_RESIZE_FORBIDDEN);
+
+    if (!resize_forbidden || !midsession) {
+        s = ctrl_getset(b, "Window", "size", "Set the size of the window");
+        ctrl_columns(s, 2, 50, 50);
+        c = ctrl_editbox(s, "Columns", 'm', 100,
+                         HELPCTX(window_size),
+                         conf_editbox_handler, I(CONF_width), I(-1));
+        c->generic.column = 0;
+        c = ctrl_editbox(s, "Rows", 'r', 100,
+                         HELPCTX(window_size),
+                         conf_editbox_handler, I(CONF_height),I(-1));
+        c->generic.column = 1;
+        ctrl_columns(s, 1, 100);
+    }
 
     s = ctrl_getset(b, "Window", "scrollback",
                     "Control the scrollback in the window");
@@ -2359,6 +2367,36 @@ void setup_config_box(struct controlbox *b, bool midsession,
                      HELPCTX(rlogin_localuser),
                      conf_editbox_handler, I(CONF_localusername), I(1));
 
+        /*
+         * The Protocol/SUPDUP panel.
+         */
+        ctrl_settitle(b, "Connection/SUPDUP",
+                      "Enabling and disabling SUPDUP user options");
+
+        s = ctrl_getset(b, "Connection/SUPDUP", "main", NULL);
+
+        ctrl_editbox(s, "Location string", 'l', 80,
+                     HELPCTX(supdup_location),
+                     conf_editbox_handler, I(CONF_supdup_location),
+                     I(1));
+
+        ctrl_radiobuttons(s, "Extended ASCII Character set:", 'z', 4,
+                          HELPCTX(supdup_ascii),
+                          conf_radiobutton_handler,
+                          I(CONF_supdup_ascii_set),
+                          "None", I(SUPDUP_CHARSET_ASCII),
+                          "ITS", I(SUPDUP_CHARSET_ITS),
+                          "WAITS", I(SUPDUP_CHARSET_WAITS), NULL);
+
+        ctrl_checkbox(s, "**MORE** processing", 'm',
+                      HELPCTX(supdup_more),
+                      conf_checkbox_handler,
+                      I(CONF_supdup_more));
+
+        ctrl_checkbox(s, "Terminal scrolling", 's',
+                      HELPCTX(supdup_scroll),
+                      conf_checkbox_handler,
+                      I(CONF_supdup_scroll));
     }
 
     /*

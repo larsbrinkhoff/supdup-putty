@@ -373,6 +373,7 @@ static const char *gtk_seat_get_x_display(Seat *seat);
 static bool gtk_seat_get_windowid(Seat *seat, long *id);
 #endif
 static bool gtk_seat_set_trust_status(Seat *seat, bool trusted);
+static bool gtk_seat_get_cursor_position(Seat *seat, int *x, int *y);
 
 static const SeatVtable gtk_seat_vt = {
     gtk_seat_output,
@@ -399,6 +400,7 @@ static const SeatVtable gtk_seat_vt = {
     gtk_seat_set_trust_status,
     nullseat_verbose_yes,
     nullseat_interactive_yes,
+    gtk_seat_get_cursor_position,
 };
 
 static void gtk_eventlog(LogPolicy *lp, const char *string)
@@ -4443,6 +4445,7 @@ static void compute_geom_hints(GtkFrontend *inst, GdkGeometry *geom)
 
 void set_geom_hints(GtkFrontend *inst)
 {
+    const struct BackendVtable *vt;
     GdkGeometry geom;
     gint flags = GDK_HINT_MIN_SIZE | GDK_HINT_BASE_SIZE | GDK_HINT_RESIZE_INC;
     compute_geom_hints(inst, &geom);
@@ -4450,6 +4453,16 @@ void set_geom_hints(GtkFrontend *inst)
     if (inst->gotpos)
         flags |= GDK_HINT_USER_POS;
 #endif
+    vt = backend_vt_from_proto(conf_get_int(inst->conf, CONF_protocol));
+    if (vt && vt->flags & BACKEND_RESIZE_FORBIDDEN) {
+        /* Window resizing forbidden.  Set both minimum and maximum
+         * dimensions to be the initial size. */
+        geom.min_width = inst->width*inst->font_width + 2*inst->window_border;
+        geom.min_height = inst->height*inst->font_height + 2*inst->window_border;
+        geom.max_width = geom.min_width;
+        geom.max_height = geom.min_height;
+        flags |= GDK_HINT_MAX_SIZE;
+    }
     gtk_window_set_geometry_hints(GTK_WINDOW(inst->window),
                                   NULL, &geom, flags);
 }
@@ -5529,4 +5542,14 @@ static bool gtk_seat_set_trust_status(Seat *seat, bool trusted)
     GtkFrontend *inst = container_of(seat, GtkFrontend, seat);
     term_set_trust_status(inst->term, trusted);
     return true;
+}
+
+static bool gtk_seat_get_cursor_position(Seat *seat, int *x, int *y)
+{
+    GtkFrontend *inst = container_of(seat, GtkFrontend, seat);
+    if (inst->term) {
+        term_get_cursor_position(inst->term, x, y);
+        return true;
+    }
+    return false;
 }

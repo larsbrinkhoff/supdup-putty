@@ -365,11 +365,18 @@ enum {
 };
 
 enum {
+    /* SUPDUP character set options */
+    SUPDUP_CHARSET_ASCII, SUPDUP_CHARSET_ITS, SUPDUP_CHARSET_WAITS
+};
+
+enum {
     /* Protocol back ends. (CONF_protocol) */
     PROT_RAW, PROT_TELNET, PROT_RLOGIN, PROT_SSH, PROT_SSHCONN,
     /* PROT_SERIAL is supported on a subset of platforms, but it doesn't
      * hurt to define it globally. */
     PROT_SERIAL,
+    /* PROT_SUPDUP is the historical RFC 734 protocol. */
+    PROT_SUPDUP,
     PROTOCOL_LIMIT, /* upper bound on number of protocols */
 };
 
@@ -479,6 +486,11 @@ enum {
     ADDRTYPE_NAME      /* SockAddr storing an unresolved host name */
 };
 
+/* Backend flags */
+#define BACKEND_RESIZE_FORBIDDEN    0x01   /* Backend does not allow
+                                              resizing terminal */
+#define BACKEND_NEEDS_TERMINAL      0x02   /* Backend must have terminal */
+
 struct Backend {
     const BackendVtable *vt;
 };
@@ -521,6 +533,7 @@ struct BackendVtable {
 
     int protocol;
     int default_port;
+    unsigned flags;
 };
 
 static inline const char *backend_init(
@@ -918,6 +931,13 @@ struct SeatVtable {
      * Ask the seat whether it's an interactive program.
      */
     bool (*interactive)(Seat *seat);
+
+    /*
+     * Return the seat's current idea of where the output cursor is.
+     *
+     * Returns true if the seat has a cursor. Returns false if not.
+     */
+    bool (*get_cursor_position)(Seat *seat, int *x, int *y);
 };
 
 static inline size_t seat_output(
@@ -967,6 +987,8 @@ static inline bool seat_verbose(Seat *seat)
 { return seat->vt->verbose(seat); }
 static inline bool seat_interactive(Seat *seat)
 { return seat->vt->interactive(seat); }
+static inline bool seat_get_cursor_position(Seat *seat, int *x, int *y)
+{ return  seat->vt->get_cursor_position(seat, x, y); }
 
 /* Unlike the seat's actual method, the public entry point
  * seat_connection_fatal is a wrapper function with a printf-like API,
@@ -1023,6 +1045,7 @@ bool nullseat_verbose_no(Seat *seat);
 bool nullseat_verbose_yes(Seat *seat);
 bool nullseat_interactive_no(Seat *seat);
 bool nullseat_interactive_yes(Seat *seat);
+bool nullseat_get_cursor_position(Seat *seat, int *x, int *y);
 
 /*
  * Seat functions provided by the platform's console-application
@@ -1283,6 +1306,11 @@ NORETURN void cleanup_exit(int);
     X(INT, NONE, serstopbits) \
     X(INT, NONE, serparity) /* SER_PAR_NONE, SER_PAR_ODD, ... */ \
     X(INT, NONE, serflow) /* SER_FLOW_NONE, SER_FLOW_XONXOFF, ... */ \
+    /* Supdup options */ \
+    X(STR, NONE, supdup_location) \
+    X(INT, NONE, supdup_ascii_set) \
+    X(BOOL, NONE, supdup_more) \
+    X(BOOL, NONE, supdup_scroll) \
     /* Keyboard options */ \
     X(BOOL, NONE, bksp_is_delete) \
     X(BOOL, NONE, rxvt_homeend) \
@@ -1607,6 +1635,7 @@ int term_get_userpass_input(Terminal *term, prompts_t *p, bufchain *input);
 void term_set_trust_status(Terminal *term, bool trusted);
 void term_keyinput(Terminal *, int codepage, const void *buf, int len);
 void term_keyinputw(Terminal *, const wchar_t * widebuf, int len);
+void term_get_cursor_position(Terminal *term, int *x, int *y);
 
 typedef enum SmallKeypadKey {
     SKK_HOME, SKK_END, SKK_INSERT, SKK_DELETE, SKK_PGUP, SKK_PGDN,
@@ -1748,6 +1777,11 @@ extern const struct BackendVtable telnet_backend;
  */
 extern const struct BackendVtable ssh_backend;
 extern const struct BackendVtable sshconn_backend;
+
+/*
+ * Exports from supdup.c.
+ */
+extern const struct BackendVtable supdup_backend;
 
 /*
  * Exports from ldisc.c.

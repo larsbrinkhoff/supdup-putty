@@ -407,6 +407,7 @@ static const SeatVtable plink_seat_vt = {
     console_set_trust_status,
     cmdline_seat_verbose,
     plink_seat_interactive,
+    nullseat_get_cursor_position,
 };
 static Seat plink_seat[1] = {{ &plink_seat_vt }};
 
@@ -816,6 +817,12 @@ int main(int argc, char **argv)
     if (!backvt) {
         fprintf(stderr,
                 "Internal fault: Unsupported protocol found\n");
+        return 1;
+    }
+
+    if (backvt->flags & BACKEND_NEEDS_TERMINAL) {
+        fprintf(stderr,
+                "Plink must have a terminal to run.\n");
         return 1;
     }
 
