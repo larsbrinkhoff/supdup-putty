@@ -8,7 +8,7 @@ systems.
 If you already know what SSH, Telnet, Rlogin and SUPDUP are, you can
 safely skip on to the next section.
 
-SSH, Telnet, Rlogin and SUPDUP are three ways of doing the same thing:
+SSH, Telnet, Rlogin and SUPDUP are four ways of doing the same thing:
 logging in to a multi-user computer from another computer, over a
 network.
 

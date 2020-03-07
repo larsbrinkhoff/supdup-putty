@@ -587,7 +587,7 @@ close the window using the close button.
 PuTTY can use the SUPDUP protocol to connect to a server.
 
 To make a connection of this type, select \q{SUPDUP} from the
-\q(Connection type} radio buttons on the \{Session} panel (see
+\q{Connection type} radio buttons on the \q{Session} panel (see
 \k{config-hostname}). For further configuration options (character
 set, more processing, scrolling), you can use the \q{SUPDUP}
 configuration panel (see \k{config-supdup}).

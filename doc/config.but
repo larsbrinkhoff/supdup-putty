@@ -2224,24 +2224,32 @@ name).
 The \i{SUPDUP} panel allows you to configure options that only apply
 to SUPDUP sessions.
 
-\S{supdup-location} is the location string announced to the server.
-It should describe your location.  It will typically be displayed in
-user listings.
+\S{supdup-location} \q{Location string}
 
-\S{supdup-ascii} declares what kind of character set extension your
-terminal supports.  If the server supports it, it will send text using
-that character set.  \q{None} means the standard 95 printable ASCII
-characters.  \q{ITS} means ASCII extended with printable characters in
-the control character range.  This character set is documented in the
-SUPDUP protocol definition.  \q{WAITS} is similar to \{ITS} but uses
+This is the location string announced to the server. It should
+describe your location. It will typically be displayed in user
+listings.
+
+\S{supdup-ascii} \q{Extended ASCII Character set}
+
+This declares what kind of character set extension your terminal
+supports. If the server supports it, it will send text using that
+character set. \q{None} means the standard 95 printable ASCII
+characters. \q{ITS} means ASCII extended with printable characters in
+the control character range. This character set is documented in the
+SUPDUP protocol definition. \q{WAITS} is similar to \q{ITS} but uses
 some alternative characters in the extended set.
 
-\S{supdup-more} selects whether or not to pause when text reaches the
+\S{supdup-more} \q{**MORE** processing}
+
+This selects whether or not to pause when text reaches the
 end of a page.
 
-\S{supdup-scroll} controls whether the terminal will perform scrolling
-then the cursor goes below the last line, or if the cursor will return
-to the first line.
+\S{supdup-scroll} \q{Terminal scrolling}
+
+This controls whether the terminal will perform scrolling then the
+cursor goes below the last line, or if the cursor will return to the
+first line.
 
 \H{config-ssh} The SSH panel
 
