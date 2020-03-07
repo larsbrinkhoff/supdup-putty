@@ -584,7 +584,10 @@ close the window using the close button.
 
 \H{using-supdup} Connecting using the SUPDUP protocol
 
-PuTTY can use the SUPDUP protocol to connect to a server.
+PuTTY can use the SUPDUP protocol to connect to a server. SUPDUP is a
+login protocol used mainly by PDP-10 and Lisp machines during the
+period 1975-1990.  Like Telnet and Rlogin, it is unsecured, so modern
+systems almost never support it.
 
 To make a connection of this type, select \q{SUPDUP} from the
 \q{Connection type} radio buttons on the \q{Session} panel (see

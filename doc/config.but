@@ -2226,9 +2226,13 @@ to SUPDUP sessions.
 
 \S{supdup-location} \q{Location string}
 
-This is the location string announced to the server. It should
-describe your location. It will typically be displayed in user
-listings.
+In SUPDUP, the client sends a piece of text of its choice to the
+server giving the user's location. This is typically displayed in
+lists of logged-in users.
+
+By default, PuTTY just defaults this to "The Internet". If you want
+your location to show up as something more specific, you can configure
+it here.
 
 \S{supdup-ascii} \q{Extended ASCII Character set}
 
@@ -2238,12 +2242,16 @@ character set. \q{None} means the standard 95 printable ASCII
 characters. \q{ITS} means ASCII extended with printable characters in
 the control character range. This character set is documented in the
 SUPDUP protocol definition. \q{WAITS} is similar to \q{ITS} but uses
-some alternative characters in the extended set.
+some alternative characters in the extended set: most prominently, it
+will display arrows instead of \c{^} and \c{_}, and \c{\}} instead of
+\c{~}.  \q{ITS} extended ASCII is used by ITS and Lisp machines,
+whilst \q{WAITS} is only used by the WAITS operating system from the
+Stanford AI Laboratory.
 
 \S{supdup-more} \q{**MORE** processing}
 
-This selects whether or not to pause when text reaches the
-end of a page.
+When **MORE** processing is enabled, the server causes output to pause
+at the bottom of the screen, until a space is typed.
 
 \S{supdup-scroll} \q{Terminal scrolling}
 
